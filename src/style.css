@@ -1,0 +1,149 @@
+:root {
+  --bg: #05070c;
+  --fg: #e8ecf4;
+  --muted: #8d97ab;
+  --glass: rgba(14, 18, 28, 0.62);
+  --line: rgba(255, 255, 255, 0.1);
+  --accent: #9fd0ff;
+  --accent-ink: #06121f;
+  --radius: 14px;
+  --font: system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#view {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+#view:active { cursor: grabbing; }
+
+/* === 載入畫面 === */
+.loading {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: var(--bg);
+  transition: opacity 1.2s ease;
+  z-index: 10;
+}
+.loading.done { opacity: 0; pointer-events: none; }
+.loading-title { font-size: 22px; letter-spacing: 0.3em; }
+.loading-sub { margin-top: 10px; color: var(--muted); font-size: 13px; }
+
+/* === HUD：閒置自動淡出 === */
+.hud { transition: opacity 0.8s ease; }
+body.idle .hud { opacity: 0; pointer-events: none; }
+/* 設定按鈕閒置時只變淡、不消失，否則第一下點擊會落到畫布上 */
+body.idle .fab { opacity: 0.3; pointer-events: auto; }
+
+.top {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+.place-name { font-size: 13px; letter-spacing: 0.06em; color: var(--fg); opacity: 0.85; }
+.place-time { font-size: 12px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.counter { font-size: 12px; color: var(--muted); }
+.counter b { color: var(--fg); font-size: 15px; font-variant-numeric: tabular-nums; }
+
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--glass);
+  color: var(--fg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.fab[aria-expanded="true"] { color: var(--accent); }
+
+.panel {
+  position: fixed;
+  right: 16px;
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 60px);
+  width: min(320px, calc(100vw - 32px));
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  padding: 14px 16px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-size: 13px;
+}
+.panel[hidden] { display: none; }
+.panel section { margin-bottom: 14px; }
+.panel h2 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+}
+.val { color: var(--fg); font-weight: 400; font-variant-numeric: tabular-nums; }
+.hint { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chips.small { margin-top: 8px; }
+.chips.small .chip { padding: 4px 9px; font-size: 12px; }
+
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+.row { display: flex; gap: 8px; }
+.btn {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); font-weight: 400; }
+
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

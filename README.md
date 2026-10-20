@@ -10,6 +10,10 @@ npm run dev        # http://127.0.0.1:5188
 npm run build      # 輸出到 dist/，可放上任何靜態主機
 ```
 
+### 部署到 GitHub Pages
+
+`.github/workflows/deploy.yml` 會在推送到 `main` 時自動執行 `npm ci`、`npm run build`，再把 `dist/` 部署到 GitHub Pages。第一次使用前，要到 repo 的 **Settings → Pages**，把 **Source** 設成 **GitHub Actions**。`base: './'` 是相對路徑，放在 `https://<帳號>.github.io/<repo>/` 子路徑下也能正常載入。免費帳號的 repo 要設成公開，網站才能用 Pages 發佈。
+
 網址參數（截圖驗證用）：`?scene=rainier|joshua`、`?preset=milkyway|moonlight|aurora|bluehour`、`?yaw=-4&pitch=8&fov=68`、`?con=off|lines|names`（星座）、`?star=91262`（直接選一顆星，數字是 HIP 編號）、`?rate=real|demo|storm|dreamy`、`?dream=300`（夢幻模式每分鐘顆數）、`?q=low`（強制低品質）、`?debug`（在 console 印出載入時間）。
 
 ## 功能

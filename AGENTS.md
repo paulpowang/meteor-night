@@ -44,6 +44,7 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 | 星名出現簡體字 | 補進 `scripts/build-stars.mjs` 的 `S2T` 對照表，再跑 `npm run data` |
 | 測試 | 沒有自動化測試，跑 `.claude/skills/qa-checklist/SKILL.md` |
 | 執行 | `npm run dev` → http://127.0.0.1:5188 |
+| 部署 | 推送到 `main`，GitHub Actions（`.github/workflows/deploy.yml`）會自動部署到 GitHub Pages；本機先跑 `npm run build` 確認會過 |
 
 **仰角掃描**：在 dev server 的 console 執行 `await import('/src/world/heightfield.ts')`，沿方位角 -40°..30° 計算 `atan(h / d)` 的最大值。山頂（方位約 -12.5°）要是最大值，大約 18°。
 

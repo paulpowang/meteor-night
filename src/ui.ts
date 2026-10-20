@@ -14,18 +14,26 @@ export const SPEEDS = [
   { key: 240, name: '縮時 ×240' },
 ] as const;
 
+export const CONSTELLATION_MODES = [
+  { key: 'off', name: '不顯示' },
+  { key: 'lines', name: '連線' },
+  { key: 'names', name: '連線＋名稱' },
+] as const;
+export type ConstellationMode = (typeof CONSTELLATION_MODES)[number]['key'];
+
 export interface Settings {
   preset: PresetKey;
   rate: RateKey;
   hour: number;
   speed: number;
   wind: number;
+  constellations: ConstellationMode;
 }
 
 const STORE_KEY = 'starshowing_settings_v1';
 
 export function loadSettings(): Settings {
-  const def: Settings = { preset: 'milkyway', rate: 'demo', hour: PRESETS.milkyway.hour, speed: 0, wind: 0.2 };
+  const def: Settings = { preset: 'milkyway', rate: 'demo', hour: PRESETS.milkyway.hour, speed: 0, wind: 0.2, constellations: 'off' };
   try {
     const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if (!raw || typeof raw !== 'object') return def;
@@ -35,6 +43,7 @@ export function loadSettings(): Settings {
     if (Number.isFinite(raw.hour) && raw.hour >= 21 && raw.hour <= 29.5) s.hour = raw.hour;
     if (SPEEDS.some((r) => r.key === raw.speed)) s.speed = raw.speed;
     if (Number.isFinite(raw.wind) && raw.wind >= 0 && raw.wind <= 1) s.wind = raw.wind;
+    if (CONSTELLATION_MODES.some((m) => m.key === raw.constellations)) s.constellations = raw.constellations;
     return s;
   } catch {
     return def;
@@ -88,6 +97,7 @@ export function createUi(settings: Settings, h: UiHandlers) {
     chips($('presets'), PRESET_ORDER.map((k) => ({ key: k, name: PRESETS[k].name, desc: PRESETS[k].desc })),
       () => settings.preset, (k) => { settings.preset = k; h.onPreset(k); }),
     chips($('rates'), RATES, () => settings.rate, (k) => { settings.rate = k; h.onChange(); }),
+    chips($('constellations'), CONSTELLATION_MODES, () => settings.constellations, (k) => { settings.constellations = k; h.onChange(); }),
     chips($('speeds'), SPEEDS, () => settings.speed as 0 | 1 | 240, (k) => { settings.speed = k; h.onChange(); }),
   ];
 

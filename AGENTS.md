@@ -5,7 +5,7 @@
 
 ## 一句話理解本專案
 
-Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Reflection Lakes 看英仙座流星雨，有真實星圖、銀河、湖面倒影和 4 種星空樣式。純前端，設定存在 localStorage。
+Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Reflection Lakes 看英仙座流星雨，有真實星圖、銀河、湖面倒影和 4 種星空樣式；第二版加了星座連線與名稱、點星星認星。純前端，設定存在 localStorage。
 
 ## 鐵則（不可違反）
 
@@ -15,7 +15,8 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 4. UI、文件、註解一律繁體中文。
 5. 專案放在 `C:\dev\starshowing`，**不要搬進 OneDrive**（`node_modules` 同步問題）。
 6. 不加圖片素材；新增資料檔要寫明來源與授權。
-7. localStorage key `starshowing_settings_v1`、樣式 key（`milkyway`、`moonlight`、`aurora`、`bluehour`）發佈後不可改名。
+7. localStorage key `starshowing_settings_v1`、樣式 key（`milkyway`、`moonlight`、`aurora`、`bluehour`）、星座模式 key（`off`、`lines`、`names`）發佈後不可改名。
+8. 星座連線預設關閉，而且要又細又淡，不能搶流星的風采。
 
 ## 架構速覽
 
@@ -23,7 +24,9 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 
 ### 核心資料結構
 
-- `public/data/stars.json`：`stars` 是扁平陣列，每 5 個數字為 `[hip, 赤經°, 赤緯°, 星等, B-V]`，依星等由亮到暗排序；`names[hip] = {n, zh, b, c}`。`zh` 是簡體，第二版要轉成繁體。
+- `public/data/stars.json`：`stars` 是扁平陣列，每 5 個數字為 `[hip, 赤經°, 赤緯°, 星等, B-V]`，依星等由亮到暗排序；`names[hip] = {n, zh, b, c}`，`zh` 建置時已轉成繁體（對照表在 `scripts/build-stars.mjs` 的 `S2T`）；`constellations[] = {id, r, c, l}`，`l` 是折線 `[赤經°, 赤緯°, …]`，`c` 是名稱位置。
+- 星表索引 `0 … catalogCount-1` 是真實星；之後的是程式產生的暗星，認星不能選到它們。
+- 認星：`src/sky/identify.ts` 的 `pick()` 把點擊方向用 `eqToWorld` 的轉置轉回赤道座標，評分 = 像素距離 −（4.5 − 星等）× 4 px，比 4.5 等暗的星只在附近沒有亮星時才選。俗名與簡介在 `src/sky/lore.ts`。
 - `SkyPreset`（`src/presets.ts`）：每種星空樣式的全部參數。
 - 流星：`src/sky/meteors.ts` 有固定 48 槽的物件池，每槽 2 個四邊形（本體＋餘跡）。
 
@@ -34,6 +37,8 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 | 新增星空樣式 | 在 `presets.ts` 加一筆並加進 `PRESET_ORDER`；需要新天空效果時，在 `skydome.ts` 加 uniform |
 | 調整山形 | `src/world/heightfield.ts`；改完用下方「仰角掃描」確認山頂仍是剪影最高點 |
 | 更新星表 | 把新檔放進 `data-src/`，再跑 `npm run data` |
+| 新增星的簡介 | 在 `src/sky/lore.ts` 的 `STAR_LORE` 加一筆（key 是 HIP 編號）；俗名和傳統星官名不同時，標題會自動寫成「俗名（星官名）」 |
+| 星名出現簡體字 | 補進 `scripts/build-stars.mjs` 的 `S2T` 對照表，再跑 `npm run data` |
 | 測試 | 沒有自動化測試，跑 `.claude/skills/qa-checklist/SKILL.md` |
 | 執行 | `npm run dev` → http://127.0.0.1:5188 |
 
@@ -46,6 +51,10 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 - 流星四邊形要設 `DoubleSide`，否則有一半會被背面剔除，湖面倒影裡也會左右翻轉。
 - 湖岸高度必須低於眼睛高度，而且南岸要貼近腳邊（約 2.5 m），才看得到完整的山頂倒影（山頂倒影在俯角 17°）。
 - Browser pane 隱藏時載入，`innerWidth` 可能是 0：畫布尺寸由 CSS 決定，用 `ResizeObserver` 更新。
+- Reflector 的反射相機是第一次算圖時 `camera.clone()` 出來的，會複製當下的 layers，所以不能靠 layers 排除倒影裡的物件。星座連線改成在 `lake.onBeforeRender` 裡暫時 `visible = false`。
+- HTML 疊層（星座名稱、選取圈）不受深度測試，要自己用 `src/world/horizon.ts` 的剪影仰角判斷是否被山擋住。
+- 拖曳轉頭時星星會跟著手指走，所以點擊判定用放開時的位置就好；出現第二根手指，整個手勢都不算點擊。
+- 本機另一個 session 可能佔著 5188；可以用 `npm run dev -- --port 5190` 另開一個。
 
 ## 已知問題
 

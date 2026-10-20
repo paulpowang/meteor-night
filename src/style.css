@@ -146,4 +146,76 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 }
 .btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); font-weight: 400; }
 
+/* === 星座名稱、選取圈、認星卡 === */
+.sky-labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+.sky-labels[hidden] { display: none; }
+.con-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: rgba(170, 195, 240, 0.55);
+  white-space: nowrap;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
+  will-change: transform;
+}
+.con-label.rank3 { font-size: 11px; color: rgba(170, 195, 240, 0.38); }
+
+.star-marker {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(159, 208, 255, 0.7);
+  pointer-events: none;
+}
+.star-marker[hidden] { display: none; }
+
+.star-card {
+  position: fixed;
+  left: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: min(320px, calc(100vw - 96px));
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.star-card[hidden] { display: none; }
+.star-card h3 { margin: 0 24px 2px 0; font-size: 17px; font-weight: 600; letter-spacing: 0.04em; }
+.sc-sub { color: var(--accent); font-size: 12px; }
+.sc-sub[hidden] { display: none; }
+.star-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin: 8px 0 0; }
+.star-card dl div { display: flex; gap: 6px; min-width: 0; }
+.star-card dl div:last-child { grid-column: 1 / -1; }
+.star-card dt { color: var(--muted); flex: none; }
+.star-card dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.star-card p { margin: 8px 0 0; color: #c9d1e0; }
+.star-card p[hidden] { display: none; }
+.sc-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+/* 面板打開時壓在認星卡上方（手機上兩者會重疊） */
+.panel { z-index: 3; }
+
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -8,10 +8,13 @@ export const SKY_RADIUS = 40000;
 export interface StarCatalog {
   cols: string[];
   stars: number[];
+  /** n 英文專名、zh 中文名（建置時已轉成繁體）、b 拜耳名、c 星座縮寫 */
   names: Record<string, { n: string; zh: string; b: string; c: string }>;
+  /** 星座連線：l 是折線（[赤經°, 赤緯°, …]），c 是名稱標籤位置，r 是 d3-celestial 的重要度（1 最主要） */
+  constellations: { id: string; r: number; c: [number, number]; l: number[][] }[];
 }
 
-/** 合成暗星數量（只為了畫面質感；第二版認星只用星表的前 catalogCount 顆） */
+/** 合成暗星數量（只為了畫面質感；認星只用星表的前 catalogCount 顆） */
 const SYNTH_COUNT = 26000;
 
 export function createStars(catalog: StarCatalog) {

@@ -1,13 +1,17 @@
-/* 星空觀景台 v1：主程式。建場景 → 每幀更新天球方向、流星、湖面 → 後製輸出。 */
+/* 星空觀景台：主程式。建場景 → 每幀更新天球方向、星座、流星、湖面 → 後製輸出。 */
 import * as THREE from 'three';
 import { EQ_TO_GAL, eqToHoriz, eqToWorldMatrix, horizToWorld, localSiderealDeg, PERSEID_RADIANT } from './astro';
 import { createLookControls } from './controls';
+import { createOverlay } from './overlay';
 import { createPost } from './post';
 import { localHourToDate, PRESETS, type SkyPreset } from './presets';
+import { createConstellations } from './sky/constellations';
+import { createStarPicker } from './sky/identify';
 import { createMeteors } from './sky/meteors';
 import { createSkyDome } from './sky/skydome';
 import { createStars, type StarCatalog } from './sky/stars';
 import { createUi, formatHour, loadSettings, RATES } from './ui';
+import { horizonAlt } from './world/horizon';
 import { createLake } from './world/lake';
 import { createTerrain, type Quality } from './world/terrain';
 import { createTrees } from './world/trees';
@@ -59,7 +63,7 @@ post.setSize(...viewSize());
 const settings = loadSettings();
 let preset: SkyPreset = PRESETS[settings.preset];
 
-const look = createLookControls(camera, canvas, { yaw: -4, pitch: 8, fov: isMobile ? 80 : 68 }, () => ui.activity());
+const look = createLookControls(camera, canvas, { yaw: -4, pitch: 8, fov: isMobile ? 80 : 68 }, () => ui.activity(), onTap);
 
 const ui = createUi(settings, {
   onPreset(k) {
@@ -67,7 +71,7 @@ const ui = createUi(settings, {
     settings.hour = preset.hour;
     applyPreset();
   },
-  onChange() {},
+  onChange() { applyConstellations(); },
   onFireball() { meteors.spawn(true); },
   onLookRadiant() {
     const [az, alt] = eqToHoriz(PERSEID_RADIANT.ra, PERSEID_RADIANT.dec, localSiderealDeg(localHourToDate(settings.hour)));
@@ -99,16 +103,47 @@ function applyPreset() {
   ui.refresh();
 }
 
-/* === 星表載入後才建星星 === */
+/* === 星表載入後才建星星、星座 === */
 let stars: ReturnType<typeof createStars>;
 const catalog: StarCatalog = await fetch(`${import.meta.env.BASE_URL}data/stars.json`).then((r) => r.json());
 stars = createStars(catalog);
 stars.material.uniforms.uPixelRatio.value = pixelRatio;
 scene.add(stars.points);
+const constellations = createConstellations(catalog);
+scene.add(constellations.lines);
+const overlay = createOverlay(camera, canvas, constellations.labels);
+const picker = createStarPicker(catalog, stars.catalogCount);
 applyPreset();
 
-/* === 主迴圈 === */
+// 星座連線不進湖面倒影：Reflector 繪製反射貼圖前先藏起來，畫完再恢復
+{
+  const reflect = lake.lake.onBeforeRender;
+  lake.lake.onBeforeRender = function (...args) {
+    const was = constellations.lines.visible;
+    constellations.lines.visible = false;
+    reflect.apply(this, args);
+    constellations.lines.visible = was;
+  };
+}
+
+function applyConstellations() {
+  constellations.lines.visible = settings.constellations !== 'off';
+  overlay.setNames(settings.constellations === 'names');
+}
+applyConstellations();
+
+/* === 點星星認星 === */
 const eqToWorld = new THREE.Matrix4();
+const tapDir = new THREE.Vector3();
+function onTap(x: number, y: number, pointerType: string) {
+  tapDir.set((x / canvas.clientWidth) * 2 - 1, -(y / canvas.clientHeight) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
+  const radPerPx = THREE.MathUtils.degToRad(camera.fov) / canvas.clientHeight;
+  // 手指比滑鼠粗，觸控的搜尋半徑放大
+  const i = picker.pick(tapDir, eqToWorld, radPerPx, pointerType === 'mouse' ? 26 : 40, preset.limitingMag);
+  overlay.select(i < 0 ? null : picker.describe(i), eqToWorld);
+}
+
+/* === 主迴圈 === */
 const worldToGal = new THREE.Matrix3();
 const timer = new THREE.Timer();
 let t = 0;
@@ -127,6 +162,8 @@ function frame() {
 
   stars.points.matrix.copy(eqToWorld);
   stars.points.matrixWorldNeedsUpdate = true;
+  constellations.lines.matrix.copy(eqToWorld);
+  constellations.lines.matrixWorldNeedsUpdate = true;
   stars.material.uniforms.uTime.value = t;
   // 世界 → 銀道 = 赤道→銀道 × (赤道→世界)ᵀ（純旋轉，轉置即反矩陣）
   worldToGal.setFromMatrix4(eqToWorld).transpose().premultiply(EQ_TO_GAL);
@@ -143,6 +180,8 @@ function frame() {
   ui.setClock(formatHour(settings.hour));
   ui.setCount(meteors.spawned);
   post.composer.render(dt);
+  // 疊層要用這一幀算圖用的相機（composer.render 內已更新 matrixWorld）
+  overlay.update(eqToWorld);
   requestAnimationFrame(frame);
 }
 
@@ -170,10 +209,25 @@ if (pq && pq in PRESETS) {
   applyPreset();
 }
 
+// 截圖驗證用：?con=lines|names 開星座，?star=<HIP 編號> 直接選一顆星（例如織女星 91262）
+const cq = params.get('con');
+if (cq === 'off' || cq === 'lines' || cq === 'names') {
+  settings.constellations = cq;
+  applyConstellations();
+  ui.refresh();
+}
+const sq = picker.indexOfHip(+(params.get('star') ?? NaN));
+if (sq >= 0) {
+  eqToWorldMatrix(localSiderealDeg(localHourToDate(settings.hour)), undefined, eqToWorld);
+  overlay.select(picker.describe(sq), eqToWorld);
+}
+
 t0 = performance.now();
 renderer.compile(scene, camera);
 tm('shader 編譯', t0);
 ui.loaded();
 requestAnimationFrame(frame);
+// 剪影仰角表（認星、星座名稱用）在閒置時先算好，第一次點星星才不會卡一下
+setTimeout(() => horizonAlt(0), 1500);
 // 開發模式下方便在 console 除錯
-if (import.meta.env.DEV) Object.assign(window, { __app: { scene, camera, renderer, meteors, settings } });
+if (import.meta.env.DEV) Object.assign(window, { __app: { scene, camera, renderer, meteors, settings, picker, overlay, eqToWorld, look, onTap } });

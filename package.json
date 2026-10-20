@@ -2,6 +2,12 @@
   "name": "meteor-night",
   "private": true,
   "version": "0.1.0",
+  "description": "Realistic three.js night-sky viewer: Perseid meteor shower over Mount Rainier or Joshua Tree with a real star map, Milky Way, lake reflections and constellations.",
+  "homepage": "https://paulpowang.github.io/meteor-night/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paulpowang/meteor-night.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

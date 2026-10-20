@@ -1,6 +1,40 @@
-# 星空觀景台 meteor-night
+# meteor-night · 星空觀景台
 
-線上版：<https://paulpowang.github.io/meteor-night/> · 原始碼：<https://github.com/paulpowang/meteor-night>
+**Live:** <https://paulpowang.github.io/meteor-night/> · **Source:** <https://github.com/paulpowang/meteor-night>
+
+![Paradise meadow at night with constellation lines and the Milky Way](docs/screenshot-desktop.jpg)
+
+## English summary
+
+A realistic night-sky viewer built with Vite, TypeScript, and three.js. Stand at Paradise below Mount Rainier and watch the Perseid meteor shower cross a real sky. You can also switch to Reflection Lakes (snowy peak, stars, and meteors mirrored in the water) or the Joshua Tree desert. Everything runs in the browser; settings are saved in `localStorage`.
+
+**Highlights**
+
+- **Meteor shower:** meteors radiate from the Perseid radiant with a realistic brightness distribution. Includes fireballs with green or orange glow and lingering trains, rare long "earth-grazers," and four densities: real, demo, storm, and dreamy (10–600 per minute).
+- **Three scenes:** Rainier meadow (default), Rainier lake with reflections (heavier on the GPU), and Joshua Tree desert. The sky is computed for each site's latitude and longitude.
+- **Real star map:** 5,044 stars to magnitude 6, positioned for the night of 2026-08-13, colored by B-V index, and dimmed and reddened near the horizon. A procedural Milky Way includes the Cygnus Rift.
+- **Four sky styles:** Milky Way summer night, moonlit snow, aurora, and blue hour.
+- **Constellations:** lines and Chinese names for all 88 constellations (off / lines / lines + names).
+- **Tap to identify:** tap the sky to see a star's name, Bayer designation, constellation, magnitude, and position, with short notes for the brightest stars.
+- **Controls:** drag to look around, scroll or pinch to zoom, jump to the radiant, scrub or time-lapse the clock.
+
+<img src="docs/screenshot-mobile.jpg" alt="Mobile view with the settings panel open" width="300" />
+
+**Quick start**
+
+```bash
+npm install
+npm run dev     # http://127.0.0.1:5188
+npm run build   # static output in dist/
+```
+
+**Deploy:** every push to `main` runs `.github/workflows/deploy.yml`, which builds `dist/` and publishes it to GitHub Pages (source: GitHub Actions). `base: './'` keeps all paths relative, so the site works under `/meteor-night/`.
+
+URL parameters such as `?scene=`, `?preset=`, `?rate=`, and `?con=` are listed in the Chinese section below.
+
+---
+
+## 中文說明
 
 站在 Mount Rainier 山腳的 Paradise 高山草甸，看英仙座流星雨劃過真實星空。也可以換到 Reflection Lakes 湖畔（湖面映出雪山、星星和流星），或 Joshua Tree 國家公園的沙漠。
 

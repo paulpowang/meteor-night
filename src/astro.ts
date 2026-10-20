@@ -5,8 +5,11 @@ import * as THREE from 'three';
 
 const D2R = Math.PI / 180;
 
-/** Reflection Lakes 觀測點 */
+/** 目前的觀測點（換場景時由 setObserver 改寫；各函式的預設參數每次呼叫都會重讀） */
 export const OBSERVER = { lat: 46.768, lon: -121.732, elevation: 1480 };
+export function setObserver(o: { lat: number; lon: number; elevation: number }) {
+  Object.assign(OBSERVER, o);
+}
 
 /** 英仙座流星雨極大期的輻射點（J2000，度） */
 export const PERSEID_RADIANT = { ra: 48, dec: 58 };

@@ -1,6 +1,6 @@
 # 星空觀景台 starshowing
 
-站在 Mount Rainier 的 Reflection Lakes 湖畔，看英仙座流星雨劃過真實星空，湖面同時映出雪山、星星和流星。
+站在 Mount Rainier 的 Reflection Lakes 湖畔，看英仙座流星雨劃過真實星空，湖面同時映出雪山、星星和流星。也可以換到 Joshua Tree 國家公園的沙漠，在約書亞樹和花崗岩巨石間看流星。
 
 ## 快速開始
 
@@ -10,7 +10,7 @@ npm run dev        # http://127.0.0.1:5188
 npm run build      # 輸出到 dist/，可放上任何靜態主機
 ```
 
-網址參數（截圖驗證用）：`?preset=milkyway|moonlight|aurora|bluehour`、`?yaw=-4&pitch=8&fov=68`、`?con=off|lines|names`（星座）、`?star=91262`（直接選一顆星，數字是 HIP 編號）、`?rate=real|demo|storm|dreamy`、`?dream=300`（夢幻模式每分鐘顆數）、`?q=low`（強制低品質）、`?debug`（在 console 印出載入時間）。
+網址參數（截圖驗證用）：`?scene=rainier|joshua`、`?preset=milkyway|moonlight|aurora|bluehour`、`?yaw=-4&pitch=8&fov=68`、`?con=off|lines|names`（星座）、`?star=91262`（直接選一顆星，數字是 HIP 編號）、`?rate=real|demo|storm|dreamy`、`?dream=300`（夢幻模式每分鐘顆數）、`?q=low`（強制低品質）、`?debug`（在 console 印出載入時間）。
 
 ## 功能
 
@@ -19,6 +19,10 @@ npm run build      # 輸出到 dist/，可放上任何靜態主機
   - **長流星**：約 4% 的流星（輻射點低時約 8%）是從遠離輻射點處貼著大氣層掠過的長流星，慢慢劃過 50°–110° 的天空。
   - 密度分成「真實」（約每分鐘 1 顆）、「示範」、「流星暴」、「夢幻」四種，也能手動放「火流星」「長流星」。
   - **夢幻**：一直有很多彩色流星，數量用滑桿調（每分鐘 10–600 顆，預設 120）；比較慢、比較亮，長流星和餘跡更多，三成流星來自隨機方向，不受輻射點高度影響。
+- **2 個場景**（設定面板最上方切換，第一次切換約 0.4 秒，之後立即）：
+  - **Rainier 湖畔**：Reflection Lakes（46.77°N），雪山、冷杉、湖面倒影。
+  - **Joshua Tree 沙漠**：Jumbo Rocks 附近的 Queen Valley（33.99°N），約書亞樹、花崗岩巨石堆、低矮灌木，遠方一圈低山，地平線開闊；西南方有 Coachella Valley 的光害。沒有湖面倒影，每幀少畫一次整個場景，比較省顯卡（三角形數約少 3 成）。
+  - 星空依各場景的經緯度計算：在 Joshua Tree，北極星仰角約 34°，銀河中心比較高。
 - **真實星空**：5,044 顆真實恆星（星等 6 以內），依 2026-08-13 凌晨的時間和觀測點位置計算；星色依 B-V 色指數，接近地平線時會變暗、變紅。另外補了 26,000 顆程式產生的暗星，讓銀河更有層次。
 - **銀河**：沿真實銀道面分布，有雲氣和暗帶（天鵝座大裂縫）。
 - **4 種星空樣式**：銀河夏夜、月光雪山、極光之夜、藍色時刻。
@@ -35,6 +39,7 @@ index.html               畫面骨架與設定面板
 src/main.ts              建場景、主迴圈、套用星空樣式
 src/astro.ts             天文計算：恆星時、赤道→地平→世界座標、B-V→RGB、可重現亂數
 src/presets.ts           4 種星空樣式的參數
+src/scenes.ts            場景（地點）：經緯度、預設視角、光害方向、有沒有湖
 src/sky/stars.ts         恆星點精靈 shader（星等、消光、閃爍）
 src/sky/skydome.ts       天空穹頂：底色、氣輝、光害、銀河、月亮、極光、晨光
 src/sky/meteors.ts       流星生成與繪製
@@ -45,7 +50,8 @@ src/world/heightfield.ts 地形高度函式（Rainier、丘陵、Tatoosh、湖�
 src/world/terrain.ts     極座標地形網格、雪線上色與雪面細節 shader
 src/world/trees.ts       冷杉 InstancedMesh
 src/world/lake.ts        Reflector 湖面倒影、波紋
-src/world/horizon.ts     地景剪影仰角表（判斷星星是否躲在山後）
+src/world/horizon.ts     地景剪影仰角表（判斷星星是否躲在山後，各場景分開快取）
+src/world/joshua.ts      Joshua Tree 場景：沙漠高度場、約書亞樹、花崗岩巨石、灌木
 src/post.ts              光暈、ACES、暗角、顆粒
 src/controls.ts          原地轉頭視角、點擊判定（移動 < 6 px 才算點擊）
 src/ui.ts                設定面板、localStorage
@@ -77,4 +83,6 @@ docs/art-brief.md        美術方向（已核准）
 - 星座名稱標籤放在連線頂點的平均位置，少數形狀細長的星座（例如長蛇座）標籤會偏離連線。
 - 判斷「躲在山後」只算地形，沒有算前景的冷杉；樹後的星仍然點得到。
 - 星座連線在藍色時刻也是同樣亮度，沒有隨天空亮度調整。
+- 星空樣式的參數是照 Rainier 調的：在 Joshua Tree，「月光雪山」的說明仍寫雪山；「極光之夜」在 34°N 只有極強磁暴（例如 2024 年 5 月）才看得到。
+- Joshua Tree 的山形與岩丘位置是依地圖概略擺放的程式地形，不是真實地形資料。
 - 夢幻模式是藝術效果（多彩、隨機方向），不是真實天象；物件池上限 200 顆，滑桿拉到最大時偶爾會少畫幾顆。

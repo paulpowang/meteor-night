@@ -1,5 +1,6 @@
 /* 介面：設定面板、閒置淡出、設定存 localStorage（壞資料直接丟棄，用預設值）。 */
 import { PRESETS, PRESET_ORDER, type PresetKey } from './presets';
+import { SCENES, SCENE_ORDER, type SceneKey } from './scenes';
 
 export const RATES = [
   { key: 'real', name: '真實', perHour: 90, desc: '約每分鐘 1 顆，要有耐心' },
@@ -32,6 +33,7 @@ export const CONSTELLATION_MODES = [
 export type ConstellationMode = (typeof CONSTELLATION_MODES)[number]['key'];
 
 export interface Settings {
+  scene: SceneKey;
   preset: PresetKey;
   rate: RateKey;
   hour: number;
@@ -45,11 +47,12 @@ export interface Settings {
 const STORE_KEY = 'starshowing_settings_v1';
 
 export function loadSettings(): Settings {
-  const def: Settings = { preset: 'milkyway', rate: 'demo', hour: PRESETS.milkyway.hour, speed: 0, wind: 0.2, constellations: 'off', dreamCount: 120 };
+  const def: Settings = { scene: 'rainier', preset: 'milkyway', rate: 'demo', hour: PRESETS.milkyway.hour, speed: 0, wind: 0.2, constellations: 'off', dreamCount: 120 };
   try {
     const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if (!raw || typeof raw !== 'object') return def;
     const s = { ...def };
+    if (SCENE_ORDER.includes(raw.scene)) s.scene = raw.scene;
     if (PRESET_ORDER.includes(raw.preset)) s.preset = raw.preset;
     if (RATES.some((r) => r.key === raw.rate)) s.rate = raw.rate;
     if (Number.isFinite(raw.hour) && raw.hour >= 21 && raw.hour <= 29.5) s.hour = raw.hour;
@@ -79,6 +82,7 @@ export function formatHour(h: number): string {
 }
 
 export interface UiHandlers {
+  onScene(k: SceneKey): void;
   onPreset(k: PresetKey): void;
   onChange(): void;
   onFireball(): void;
@@ -111,6 +115,8 @@ export function createUi(settings: Settings, h: UiHandlers) {
   };
 
   const refreshers = [
+    chips($('scenes'), SCENE_ORDER.map((k) => ({ key: k, name: SCENES[k].name, desc: SCENES[k].desc })),
+      () => settings.scene, (k) => { if (k !== settings.scene) { settings.scene = k; h.onScene(k); } }),
     chips($('presets'), PRESET_ORDER.map((k) => ({ key: k, name: PRESETS[k].name, desc: PRESETS[k].desc })),
       () => settings.preset, (k) => { settings.preset = k; h.onPreset(k); }),
     chips($('rates'), RATES, () => settings.rate, (k) => { settings.rate = k; h.onChange(); }),
@@ -134,6 +140,9 @@ export function createUi(settings: Settings, h: UiHandlers) {
   function refresh() {
     refreshers.forEach((r) => r());
     $('preset-desc').textContent = PRESETS[settings.preset].desc;
+    $('scene-desc').textContent = SCENES[settings.scene].desc;
+    $('place').textContent = SCENES[settings.scene].place;
+    $('lake-section').hidden = !SCENES[settings.scene].lake;
     time.value = String(settings.hour);
     $('time-val').textContent = formatHour(settings.hour).slice(-5);
     wind.value = String(settings.wind);
@@ -163,5 +172,9 @@ export function createUi(settings: Settings, h: UiHandlers) {
     setClock(text: string) { $('clock').textContent = text; },
     setCount(n: number) { $('count').textContent = String(n); },
     loaded() { $('loading').classList.add('done'); },
+    busy(text: string) {
+      $('loading-sub').textContent = text;
+      $('loading').classList.remove('done');
+    },
   };
 }

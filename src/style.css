@@ -146,7 +146,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 }
 .row .btn { white-space: nowrap; padding: 9px 6px; }
 .dream-row { margin-top: 10px; }
-.dream-row[hidden] { display: none; }
+.dream-row[hidden], .panel section[hidden] { display: none; }
 .dream-row label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 12px; }
 .btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); font-weight: 400; }
 

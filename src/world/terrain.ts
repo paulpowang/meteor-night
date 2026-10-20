@@ -21,7 +21,27 @@ const smooth = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
-export function createTerrain(q: Quality) {
+/** 地形上色：依位置、高度、法線 y 分量回傳線性 RGB */
+export type Colorize = (x: number, h: number, z: number, ny: number) => [number, number, number];
+
+// Rainier：森林 → 草地／岩石 → 雪與冰河（陡坡露岩）
+const FOREST = [0.011, 0.017, 0.012], MEADOW = [0.034, 0.032, 0.026], ROCK = [0.05, 0.047, 0.045], SNOW = [0.8, 0.83, 0.9];
+export const rainierColor: Colorize = (x, h, z, ny) => {
+  const treeline = 520 + 140 * fbm2(x / 1300, z / 1300, 3);
+  const snowline = 980 + 260 * fbm2(x / 1600 + 9, z / 1600, 4);
+  const fForest = (1 - smooth(treeline - 60, treeline + 60, h)) * smooth(0.55, 0.7, ny);
+  const fSnow = smooth(snowline - 90, snowline + 140, h) * smooth(0.42, 0.62, ny + 0.06 * fbm2(x / 200, z / 200, 2));
+  const fRock = smooth(0.6, 0.4, ny);
+  const c: [number, number, number] = [0, 0, 0];
+  for (let k = 0; k < 3; k++) {
+    let base = MEADOW[k] + (ROCK[k] - MEADOW[k]) * fRock;
+    base = base + (FOREST[k] - base) * fForest;
+    c[k] = base + (SNOW[k] - base) * fSnow;
+  }
+  return c;
+};
+
+export function createTerrain(q: Quality, height: (x: number, z: number) => number = heightAt, colorize: Colorize = rainierColor) {
   const R = radii(q);
   const segs = q === 'high' ? 1024 : 512;
   const nr = R.length, na = segs + 1;
@@ -32,7 +52,7 @@ export function createTerrain(q: Quality) {
       const x = Math.sin(a) * R[i], z = -Math.cos(a) * R[i];
       const k = (i * na + j) * 3;
       pos[k] = x;
-      pos[k + 1] = heightAt(x, z);
+      pos[k + 1] = height(x, z);
       pos[k + 2] = z;
     }
   }
@@ -49,26 +69,9 @@ export function createTerrain(q: Quality) {
   geo.setIndex(idx);
   geo.computeVertexNormals();
 
-  // 依高度與坡度上色：森林 → 草地／岩石 → 雪與冰河（陡坡露岩）
   const nrm = geo.getAttribute('normal');
   const col = new Float32Array(nr * na * 3);
-  const forest = [0.011, 0.017, 0.012], meadow = [0.034, 0.032, 0.026], rock = [0.05, 0.047, 0.045], snow = [0.8, 0.83, 0.9];
-  for (let v = 0; v < nr * na; v++) {
-    const x = pos[v * 3], h = pos[v * 3 + 1], z = pos[v * 3 + 2];
-    const ny = nrm.getY(v);
-    const treeline = 520 + 140 * fbm2(x / 1300, z / 1300, 3);
-    const snowline = 980 + 260 * fbm2(x / 1600 + 9, z / 1600, 4);
-    const fForest = (1 - smooth(treeline - 60, treeline + 60, h)) * smooth(0.55, 0.7, ny);
-    const fSnow = smooth(snowline - 90, snowline + 140, h) * smooth(0.42, 0.62, ny + 0.06 * fbm2(x / 200, z / 200, 2));
-    const fRock = smooth(0.6, 0.4, ny);
-    const c = [0, 0, 0];
-    for (let k = 0; k < 3; k++) {
-      let base = meadow[k] + (rock[k] - meadow[k]) * fRock;
-      base = base + (forest[k] - base) * fForest;
-      c[k] = base + (snow[k] - base) * fSnow;
-    }
-    col.set(c, v * 3);
-  }
+  for (let v = 0; v < nr * na; v++) col.set(colorize(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2], nrm.getY(v)), v * 3);
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
   const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 });

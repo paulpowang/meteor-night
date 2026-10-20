@@ -17,6 +17,9 @@ export function createSkyDome() {
       uDawnDir: { value: new THREE.Vector3(1, 0, 0) },
       uDawn: { value: 0 },
       uTime: { value: 0 },
+      // 光害：方位（世界水平方向）與強度，依場景設定
+      uLpDir: { value: new THREE.Vector3(-0.707, 0, -0.707) },
+      uLp: { value: 1 },
     },
     vertexShader: /* glsl */ `
       varying vec3 vDir;
@@ -28,7 +31,8 @@ export function createSkyDome() {
     fragmentShader: /* glsl */ `
       uniform mat3 uWorldToGal;
       uniform vec3 uZenith, uHorizon, uMoonDir, uDawnDir;
-      uniform float uMilkyWay, uMoon, uAurora, uDawn, uTime;
+      uniform float uMilkyWay, uMoon, uAurora, uDawn, uTime, uLp;
+      uniform vec3 uLpDir;
       varying vec3 vDir;
       ${NOISE_GLSL}
 
@@ -89,10 +93,9 @@ export function createSkyDome() {
         vec3 col = mix(uHorizon, uZenith, pow(a, 0.45));
         // 氣輝：離地平線約 10° 的淡綠帶
         col += vec3(0.0026, 0.0042, 0.0022) * exp(-pow((alt - 0.16) / 0.13, 2.0)) * (1.0 - uMoon) * (1.0 - uDawn);
-        // 光害：西雅圖-塔科馬在西北方（方位約 315°），被山擋住大半，只剩低空暖色
+        // 光害：只剩低空暖色。Rainier 是西北方的西雅圖-塔科馬（被山擋住大半）；Joshua Tree 是西南方的 Coachella Valley 與更遠的洛杉磯
         vec3 hd = normalize(vec3(dir.x, 0.0, dir.z) + 1e-5);
-        vec3 lpDir = normalize(vec3(-0.707, 0.0, -0.707));
-        col += vec3(0.010, 0.0075, 0.0048) * exp(-a * 9.0) * pow(max(dot(hd, lpDir), 0.0), 3.0) * (1.0 - uDawn);
+        col += vec3(0.010, 0.0075, 0.0048) * uLp * exp(-a * 9.0) * pow(max(dot(hd, uLpDir), 0.0), 3.0) * (1.0 - uDawn);
         // 銀河（低空因消光變淡）
         col += milkyWay(dir) * uMilkyWay * 0.11 * smoothstep(-0.02, 0.3, alt);
 

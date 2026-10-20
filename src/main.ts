@@ -1,17 +1,20 @@
 /* 星空觀景台：主程式。建場景 → 每幀更新天球方向、星座、流星、湖面 → 後製輸出。 */
 import * as THREE from 'three';
-import { EQ_TO_GAL, eqToHoriz, eqToWorldMatrix, horizToWorld, localSiderealDeg, PERSEID_RADIANT } from './astro';
+import { EQ_TO_GAL, eqToHoriz, eqToWorldMatrix, horizToWorld, localSiderealDeg, PERSEID_RADIANT, setObserver } from './astro';
 import { createLookControls } from './controls';
 import { createOverlay } from './overlay';
 import { createPost } from './post';
 import { localHourToDate, PRESETS, type SkyPreset } from './presets';
+import { SCENES, type SceneKey } from './scenes';
 import { createConstellations } from './sky/constellations';
 import { createStarPicker } from './sky/identify';
 import { createMeteors } from './sky/meteors';
 import { createSkyDome } from './sky/skydome';
 import { createStars, type StarCatalog } from './sky/stars';
 import { createUi, DREAM_MAX, DREAM_MIN, formatHour, loadSettings, ratePerHour } from './ui';
-import { horizonAlt } from './world/horizon';
+import { heightAt } from './world/heightfield';
+import { horizonAlt, setHorizonHeight } from './world/horizon';
+import { createJoshuaWorld, joshuaColor, joshuaHeightAt } from './world/joshua';
 import { createLake } from './world/lake';
 import { createTerrain, type Quality } from './world/terrain';
 import { createTrees } from './world/trees';
@@ -47,12 +50,23 @@ const tm = (label: string, t0: number) => params.has('debug') && console.info(`[
 let t0 = performance.now();
 const sky = createSkyDome();
 scene.add(sky.mesh);
-scene.add(createTerrain(quality));
-tm('地形', t0); t0 = performance.now();
-scene.add(createTrees(quality));
-tm('樹', t0);
 const lake = createLake(pixelRatio);
 scene.add(lake.lake);
+
+// 地景依場景建立，建好的留著，切回來不用重建
+const worlds = new Map<SceneKey, THREE.Group>();
+function world(k: SceneKey) {
+  let g = worlds.get(k);
+  if (g) return g;
+  const t0 = performance.now();
+  g = new THREE.Group();
+  if (k === 'rainier') g.add(createTerrain(quality), createTrees(quality));
+  else g.add(createTerrain(quality, joshuaHeightAt, joshuaColor), createJoshuaWorld(quality));
+  tm(`地景 ${k}`, t0);
+  worlds.set(k, g);
+  scene.add(g);
+  return g;
+}
 const meteors = createMeteors();
 scene.add(meteors.mesh);
 
@@ -63,7 +77,9 @@ post.setSize(...viewSize());
 const settings = loadSettings();
 let preset: SkyPreset = PRESETS[settings.preset];
 
-const look = createLookControls(camera, canvas, { yaw: -4, pitch: 8, fov: isMobile ? 80 : 68 }, () => ui.activity(), onTap);
+const sq0 = params.get('scene');
+if (sq0 === 'rainier' || sq0 === 'joshua') settings.scene = sq0;
+const look = createLookControls(camera, canvas, { ...SCENES[settings.scene].view, fov: isMobile ? 80 : 68 }, () => ui.activity(), onTap);
 
 const ui = createUi(settings, {
   onPreset(k) {
@@ -72,6 +88,15 @@ const ui = createUi(settings, {
     applyPreset();
   },
   onChange() { applyConstellations(); },
+  onScene(k) {
+    // 先讓「載入中」畫出來，再建地景（第一次約 0.5–1 秒）
+    ui.busy(`正在前往 ${SCENES[k].name}…`);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      applyScene();
+      look.set(SCENES[k].view);
+      ui.loaded();
+    }));
+  },
   onFireball() { meteors.spawn('fireball'); },
   onLongMeteor() { meteors.spawn('long'); },
   onLookRadiant() {
@@ -103,6 +128,21 @@ function applyPreset() {
   renderer.toneMappingExposure = preset.exposure;
   ui.refresh();
 }
+
+function applyScene() {
+  const def = SCENES[settings.scene];
+  setObserver(def.observer);
+  setHorizonHeight(def.key === 'joshua' ? joshuaHeightAt : heightAt);
+  world(def.key);
+  worlds.forEach((g, k) => (g.visible = k === def.key));
+  // 湖面隱藏時 Reflector 不會被畫，也就不會多畫一次反射貼圖
+  lake.lake.visible = def.lake;
+  horizToWorld(def.lightPollution.az, 0, sky.material.uniforms.uLpDir.value);
+  sky.material.uniforms.uLp.value = def.lightPollution.strength;
+  ui.refresh();
+  setTimeout(() => horizonAlt(0), 1500);
+}
+applyScene();
 
 /* === 星表載入後才建星星、星座 === */
 let stars: ReturnType<typeof createStars>;
@@ -234,7 +274,5 @@ renderer.compile(scene, camera);
 tm('shader 編譯', t0);
 ui.loaded();
 requestAnimationFrame(frame);
-// 剪影仰角表（認星、星座名稱用）在閒置時先算好，第一次點星星才不會卡一下
-setTimeout(() => horizonAlt(0), 1500);
 // 開發模式下方便在 console 除錯
-if (import.meta.env.DEV) Object.assign(window, { __app: { scene, camera, renderer, meteors, settings, picker, overlay, eqToWorld, look, onTap } });
+if (import.meta.env.DEV) Object.assign(window, { __app: { scene, camera, renderer, meteors, settings, picker, overlay, eqToWorld, look, onTap, worlds } });

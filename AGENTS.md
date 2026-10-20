@@ -5,7 +5,7 @@
 
 ## 一句話理解本專案
 
-Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Reflection Lakes 看英仙座流星雨，有真實星圖、銀河、湖面倒影和 4 種星空樣式；第二版加了星座連線與名稱、點星星認星。純前端，設定存在 localStorage。
+Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Reflection Lakes（或 Joshua Tree 沙漠）看英仙座流星雨，有真實星圖、銀河、湖面倒影和 4 種星空樣式；第二版加了星座連線與名稱、點星星認星。純前端，設定存在 localStorage。
 
 ## 鐵則（不可違反）
 
@@ -15,7 +15,7 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 4. UI、文件、註解一律繁體中文。
 5. 專案放在 `C:\dev\starshowing`，**不要搬進 OneDrive**（`node_modules` 同步問題）。
 6. 不加圖片素材；新增資料檔要寫明來源與授權。
-7. localStorage key `starshowing_settings_v1`、樣式 key（`milkyway`、`moonlight`、`aurora`、`bluehour`）、密度 key（`real`、`demo`、`storm`、`dreamy`）、星座模式 key（`off`、`lines`、`names`）發佈後不可改名。
+7. localStorage key `starshowing_settings_v1`、樣式 key（`milkyway`、`moonlight`、`aurora`、`bluehour`）、場景 key（`rainier`、`joshua`）、密度 key（`real`、`demo`、`storm`、`dreamy`）、星座模式 key（`off`、`lines`、`names`）發佈後不可改名。
 8. 星座連線預設關閉，而且要又細又淡，不能搶流星的風采。
 
 ## 架構速覽
@@ -28,6 +28,7 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 - 星表索引 `0 … catalogCount-1` 是真實星；之後的是程式產生的暗星，認星不能選到它們。
 - 認星：`src/sky/identify.ts` 的 `pick()` 把點擊方向用 `eqToWorld` 的轉置轉回赤道座標，評分 = 像素距離 −（4.5 − 星等）× 4 px，比 4.5 等暗的星只在附近沒有亮星時才選。俗名與簡介在 `src/sky/lore.ts`。
 - `SkyPreset`（`src/presets.ts`）：每種星空樣式的全部參數。
+- `SceneDef`（`src/scenes.ts`）：場景的經緯度、預設視角、光害、有沒有湖。`main.ts` 的 `applyScene()` 會 `setObserver()`（`astro.ts` 的 `OBSERVER` 是可變物件，各函式的預設緯度、經度每次呼叫都重讀）、`setHorizonHeight()`、切換地景 Group 的 `visible`、隱藏湖面。地景 Group 建一次就快取。
 - 流星：`src/sky/meteors.ts` 有固定 200 槽的物件池，每槽 2 個四邊形（本體＋餘跡）。種類 `normal`／`fireball`／`long`；生命週期 = `dur`（頭在走）＋ `fade`（頭停下、尾巴淡出）＋ `trainDur`（餘跡）。頂點屬性 `shape` = (頭部長度比例, 頭部亮度)，-1 代表餘跡。
 - 夢幻模式：`settings.rate === 'dreamy'`，每分鐘顆數在 `settings.dreamCount`（10–600），`ratePerHour(settings)` 統一換算。
 
@@ -36,6 +37,7 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 | 任務 | 做法 |
 |---|---|
 | 新增星空樣式 | 在 `presets.ts` 加一筆並加進 `PRESET_ORDER`；需要新天空效果時，在 `skydome.ts` 加 uniform |
+| 新增場景 | 在 `scenes.ts` 加一筆並加進 `SCENE_ORDER`；地景寫成一個高度函式＋上色函式（傳給 `createTerrain`）和一個回傳 Group 的建構函式，在 `main.ts` 的 `world()` 接上 |
 | 調整山形 | `src/world/heightfield.ts`；改完用下方「仰角掃描」確認山頂仍是剪影最高點 |
 | 更新星表 | 把新檔放進 `data-src/`，再跑 `npm run data` |
 | 新增星的簡介 | 在 `src/sky/lore.ts` 的 `STAR_LORE` 加一筆（key 是 HIP 編號）；俗名和傳統星官名不同時，標題會自動寫成「俗名（星官名）」 |
@@ -57,6 +59,7 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 - 拖曳轉頭時星星會跟著手指走，所以點擊判定用放開時的位置就好；出現第二根手指，整個手勢都不算點擊。
 - 流星不能在亮度還很高時直接停畫：本體結束後要有 burnout 階段把亮度收到 0，否則看起來像「被截掉」（尤其是火流星，光暈會放大這個斷點）。改流星亮度曲線後，用 console 建一個獨立的 `createMeteors()`，以固定 dt 逐幀記錄 `color` 的 alpha，確認最後幾幀是平滑降到 0。
 - 長的四邊形寬度方向要在兩端各自算（切線 × 該端位置），頭部長度用像素決定，不能用固定比例，否則長流星的頭會被拉成一大坨。
+- 在 console 用 `await import('/src/astro.ts')` 拿到的模組，可能跟主程式用的不是同一個實例（Vite HMR 會加時間戳記），讀到的 `OBSERVER` 會是舊值。驗算天文時，直接用 `__app.eqToWorld` 把星的方向算出來。
 - 本機另一個 session 可能佔著 5188；可以用 `npm run dev -- --port 5190` 另開一個。
 
 ## 已知問題

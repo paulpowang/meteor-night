@@ -1,4 +1,4 @@
-# AGENTS.md — AI 協作指引（星空觀景台 starshowing）
+# AGENTS.md — AI 協作指引（星空觀景台 meteor-night）
 
 > 任何 AI 接手本專案前，請先讀完本文件。
 > 另請先閱讀通用知識庫：`C:\Users\wangp\OneDrive\Documents\AgentInstruction\00-START-HERE.md`。
@@ -13,7 +13,7 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Parad
 2. **流星雨是主打功能**，任何改動都不能讓「示範」密度在 30 秒內看不到流星。
 3. **美術方向以 `docs/art-brief.md` 為準**，大方向的改動要先問使用者。
 4. UI、文件、註解一律繁體中文。
-5. 專案放在 `C:\dev\starshowing`，**不要搬進 OneDrive**（`node_modules` 同步問題）。
+5. GitHub repo 是 `paulpowang/meteor-night`（2026-10-19 從 starshowing 改名；本機資料夾仍是 `C:\dev\starshowing`）。專案放在 `C:\dev\starshowing`，**不要搬進 OneDrive**（`node_modules` 同步問題）。
 6. 不加圖片素材；新增資料檔要寫明來源與授權。
 7. localStorage key `starshowing_settings_v1`、樣式 key（`milkyway`、`moonlight`、`aurora`、`bluehour`）、場景 key（`paradise`、`rainier`、`joshua`）、密度 key（`real`、`demo`、`storm`、`dreamy`）、星座模式 key（`off`、`lines`、`names`）發佈後不可改名。
 8. 預設場景是沒有湖的 `paradise`（使用者 2026-10-19 指定，避免一打開就吃重顯卡）；湖畔場景要保留「比較吃顯卡」的提示。

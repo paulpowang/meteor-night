@@ -1,4 +1,6 @@
-# 星空觀景台 starshowing
+# 星空觀景台 meteor-night
+
+線上版：<https://paulpowang.github.io/meteor-night/> · 原始碼：<https://github.com/paulpowang/meteor-night>
 
 站在 Mount Rainier 山腳的 Paradise 高山草甸，看英仙座流星雨劃過真實星空。也可以換到 Reflection Lakes 湖畔（湖面映出雪山、星星和流星），或 Joshua Tree 國家公園的沙漠。
 
@@ -12,7 +14,7 @@ npm run build      # 輸出到 dist/，可放上任何靜態主機
 
 ### 部署到 GitHub Pages
 
-`.github/workflows/deploy.yml` 會在推送到 `main` 時自動執行 `npm ci`、`npm run build`，再把 `dist/` 部署到 GitHub Pages。第一次使用前，要到 repo 的 **Settings → Pages**，把 **Source** 設成 **GitHub Actions**。`base: './'` 是相對路徑，放在 `https://<帳號>.github.io/<repo>/` 子路徑下也能正常載入。免費帳號的 repo 要設成公開，網站才能用 Pages 發佈。
+`.github/workflows/deploy.yml` 會在推送到 `main` 時（repo：`paulpowang/meteor-night`）自動執行 `npm ci`、`npm run build`，再把 `dist/` 部署到 GitHub Pages。第一次使用前，要到 repo 的 **Settings → Pages**，把 **Source** 設成 **GitHub Actions**。`base: './'` 是相對路徑，放在 `https://<帳號>.github.io/<repo>/` 子路徑下也能正常載入。免費帳號的 repo 要設成公開，網站才能用 Pages 發佈。
 
 網址參數（截圖驗證用）：`?scene=paradise|rainier|joshua`、`?preset=milkyway|moonlight|aurora|bluehour`、`?yaw=-4&pitch=8&fov=68`、`?con=off|lines|names`（星座）、`?star=91262`（直接選一顆星，數字是 HIP 編號）、`?rate=real|demo|storm|dreamy`、`?dream=300`（夢幻模式每分鐘顆數）、`?q=low`（強制低品質）、`?debug`（在 console 印出載入時間）。
 
@@ -35,7 +37,7 @@ npm run build      # 輸出到 dist/，可放上任何靜態主機
 - **星座（v2）**：88 星座的連線與中文名稱，設定面板可切換「不顯示／連線／連線＋名稱」，預設不顯示。連線又細又淡，跟星星共用同一個天球矩陣，不會出現在湖面倒影裡。
 - **點星星認星（v2）**：點一下天空，找出最近的亮星（星等 ≤ 4.5 優先，只找看得到、沒被山擋住的星），顯示名稱、拜耳名、星座、星等、目前方位；全天最亮的 20 顆星和北極星附有簡介。拖曳超過約 6 px 就算轉頭，不算點擊。
 - **操作**：拖曳轉頭、滾輪或雙指縮放，「看輻射點」一鍵轉向；時間可以拖動，也可以縮時播放；介面閒置 3 秒後自動淡出。
-- 設定會存在 localStorage（`starshowing_settings_v1`）。
+- 設定會存在 localStorage（`starshowing_settings_v1`；這是改名前的舊名，為了保留使用者已存的設定而不改）。
 
 ## 專案結構
 

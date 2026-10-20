@@ -15,7 +15,7 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 4. UI、文件、註解一律繁體中文。
 5. 專案放在 `C:\dev\starshowing`，**不要搬進 OneDrive**（`node_modules` 同步問題）。
 6. 不加圖片素材；新增資料檔要寫明來源與授權。
-7. localStorage key `starshowing_settings_v1`、樣式 key（`milkyway`、`moonlight`、`aurora`、`bluehour`）、星座模式 key（`off`、`lines`、`names`）發佈後不可改名。
+7. localStorage key `starshowing_settings_v1`、樣式 key（`milkyway`、`moonlight`、`aurora`、`bluehour`）、密度 key（`real`、`demo`、`storm`、`dreamy`）、星座模式 key（`off`、`lines`、`names`）發佈後不可改名。
 8. 星座連線預設關閉，而且要又細又淡，不能搶流星的風采。
 
 ## 架構速覽
@@ -28,7 +28,8 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 - 星表索引 `0 … catalogCount-1` 是真實星；之後的是程式產生的暗星，認星不能選到它們。
 - 認星：`src/sky/identify.ts` 的 `pick()` 把點擊方向用 `eqToWorld` 的轉置轉回赤道座標，評分 = 像素距離 −（4.5 − 星等）× 4 px，比 4.5 等暗的星只在附近沒有亮星時才選。俗名與簡介在 `src/sky/lore.ts`。
 - `SkyPreset`（`src/presets.ts`）：每種星空樣式的全部參數。
-- 流星：`src/sky/meteors.ts` 有固定 48 槽的物件池，每槽 2 個四邊形（本體＋餘跡）。
+- 流星：`src/sky/meteors.ts` 有固定 200 槽的物件池，每槽 2 個四邊形（本體＋餘跡）。種類 `normal`／`fireball`／`long`；生命週期 = `dur`（頭在走）＋ `fade`（頭停下、尾巴淡出）＋ `trainDur`（餘跡）。頂點屬性 `shape` = (頭部長度比例, 頭部亮度)，-1 代表餘跡。
+- 夢幻模式：`settings.rate === 'dreamy'`，每分鐘顆數在 `settings.dreamCount`（10–600），`ratePerHour(settings)` 統一換算。
 
 ## 常見任務指引
 
@@ -54,6 +55,8 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 - Reflector 的反射相機是第一次算圖時 `camera.clone()` 出來的，會複製當下的 layers，所以不能靠 layers 排除倒影裡的物件。星座連線改成在 `lake.onBeforeRender` 裡暫時 `visible = false`。
 - HTML 疊層（星座名稱、選取圈）不受深度測試，要自己用 `src/world/horizon.ts` 的剪影仰角判斷是否被山擋住。
 - 拖曳轉頭時星星會跟著手指走，所以點擊判定用放開時的位置就好；出現第二根手指，整個手勢都不算點擊。
+- 流星不能在亮度還很高時直接停畫：本體結束後要有 burnout 階段把亮度收到 0，否則看起來像「被截掉」（尤其是火流星，光暈會放大這個斷點）。改流星亮度曲線後，用 console 建一個獨立的 `createMeteors()`，以固定 dt 逐幀記錄 `color` 的 alpha，確認最後幾幀是平滑降到 0。
+- 長的四邊形寬度方向要在兩端各自算（切線 × 該端位置），頭部長度用像素決定，不能用固定比例，否則長流星的頭會被拉成一大坨。
 - 本機另一個 session 可能佔著 5188；可以用 `npm run dev -- --port 5190` 另開一個。
 
 ## 已知問題

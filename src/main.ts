@@ -10,7 +10,7 @@ import { createStarPicker } from './sky/identify';
 import { createMeteors } from './sky/meteors';
 import { createSkyDome } from './sky/skydome';
 import { createStars, type StarCatalog } from './sky/stars';
-import { createUi, formatHour, loadSettings, RATES } from './ui';
+import { createUi, DREAM_MAX, DREAM_MIN, formatHour, loadSettings, ratePerHour } from './ui';
 import { horizonAlt } from './world/horizon';
 import { createLake } from './world/lake';
 import { createTerrain, type Quality } from './world/terrain';
@@ -72,7 +72,8 @@ const ui = createUi(settings, {
     applyPreset();
   },
   onChange() { applyConstellations(); },
-  onFireball() { meteors.spawn(true); },
+  onFireball() { meteors.spawn('fireball'); },
+  onLongMeteor() { meteors.spawn('long'); },
   onLookRadiant() {
     const [az, alt] = eqToHoriz(PERSEID_RADIANT.ra, PERSEID_RADIANT.dec, localSiderealDeg(localHourToDate(settings.hour)));
     look.set({ yaw: az > 180 ? az - 360 : az, pitch: Math.min(80, alt) });
@@ -170,8 +171,7 @@ function frame() {
   sky.material.uniforms.uWorldToGal.value.copy(worldToGal);
   sky.material.uniforms.uTime.value = t;
 
-  const rate = RATES.find((r) => r.key === settings.rate)!.perHour;
-  meteors.update(dt, { ratePerHour: rate }, eqToWorld, camera, viewSize()[1]);
+  meteors.update(dt, { ratePerHour: ratePerHour(settings), dreamy: settings.rate === 'dreamy' }, eqToWorld, camera, viewSize()[1]);
 
   lake.material.uniforms.uTime.value = t;
   lake.material.uniforms.uWind.value = settings.wind;
@@ -216,6 +216,13 @@ if (cq === 'off' || cq === 'lines' || cq === 'names') {
   applyConstellations();
   ui.refresh();
 }
+// 截圖驗證用：?rate=real|demo|storm|dreamy，?dream=<每分鐘顆數>
+const rq = params.get('rate');
+if (rq === 'real' || rq === 'demo' || rq === 'storm' || rq === 'dreamy') settings.rate = rq;
+const dq = +(params.get('dream') ?? NaN);
+if (Number.isFinite(dq) && dq >= DREAM_MIN && dq <= DREAM_MAX) settings.dreamCount = dq;
+if (rq || params.has('dream')) ui.refresh();
+
 const sq = picker.indexOfHip(+(params.get('star') ?? NaN));
 if (sq >= 0) {
   eqToWorldMatrix(localSiderealDeg(localHourToDate(settings.hour)), undefined, eqToWorld);

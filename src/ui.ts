@@ -5,8 +5,18 @@ export const RATES = [
   { key: 'real', name: '真實', perHour: 90, desc: '約每分鐘 1 顆，要有耐心' },
   { key: 'demo', name: '示範', perHour: 1500, desc: '約每分鐘 25 顆' },
   { key: 'storm', name: '流星暴', perHour: 6000, desc: '像 1966 年獅子座流星暴' },
+  // 夢幻：數量由滑桿決定（settings.dreamCount，每分鐘顆數），perHour 不使用
+  { key: 'dreamy', name: '夢幻', perHour: 0, desc: '一直有很多彩色流星，可以調數量' },
 ] as const;
 export type RateKey = (typeof RATES)[number]['key'];
+
+/** 夢幻模式的每分鐘流星數範圍 */
+export const DREAM_MIN = 10, DREAM_MAX = 600;
+
+/** 實際每小時流星數（夢幻模式看滑桿） */
+export function ratePerHour(s: Settings) {
+  return s.rate === 'dreamy' ? s.dreamCount * 60 : RATES.find((r) => r.key === s.rate)!.perHour;
+}
 
 export const SPEEDS = [
   { key: 0, name: '時間靜止' },
@@ -28,12 +38,14 @@ export interface Settings {
   speed: number;
   wind: number;
   constellations: ConstellationMode;
+  /** 夢幻模式：每分鐘流星數 */
+  dreamCount: number;
 }
 
 const STORE_KEY = 'starshowing_settings_v1';
 
 export function loadSettings(): Settings {
-  const def: Settings = { preset: 'milkyway', rate: 'demo', hour: PRESETS.milkyway.hour, speed: 0, wind: 0.2, constellations: 'off' };
+  const def: Settings = { preset: 'milkyway', rate: 'demo', hour: PRESETS.milkyway.hour, speed: 0, wind: 0.2, constellations: 'off', dreamCount: 120 };
   try {
     const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if (!raw || typeof raw !== 'object') return def;
@@ -44,6 +56,7 @@ export function loadSettings(): Settings {
     if (SPEEDS.some((r) => r.key === raw.speed)) s.speed = raw.speed;
     if (Number.isFinite(raw.wind) && raw.wind >= 0 && raw.wind <= 1) s.wind = raw.wind;
     if (CONSTELLATION_MODES.some((m) => m.key === raw.constellations)) s.constellations = raw.constellations;
+    if (Number.isFinite(raw.dreamCount) && raw.dreamCount >= DREAM_MIN && raw.dreamCount <= DREAM_MAX) s.dreamCount = raw.dreamCount;
     return s;
   } catch {
     return def;
@@ -69,6 +82,7 @@ export interface UiHandlers {
   onPreset(k: PresetKey): void;
   onChange(): void;
   onFireball(): void;
+  onLongMeteor(): void;
   onLookRadiant(): void;
 }
 
@@ -76,6 +90,9 @@ export function createUi(settings: Settings, h: UiHandlers) {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
   const panel = $('panel'), toggle = $<HTMLButtonElement>('toggle');
   const time = $<HTMLInputElement>('time'), wind = $<HTMLInputElement>('wind');
+  const dream = $<HTMLInputElement>('dream'), dreamRow = $('dream-row');
+  dream.min = String(DREAM_MIN);
+  dream.max = String(DREAM_MAX);
 
   const chips = <K extends string | number>(
     host: HTMLElement, items: readonly { key: K; name: string; desc?: string }[], get: () => K, set: (k: K) => void,
@@ -103,7 +120,9 @@ export function createUi(settings: Settings, h: UiHandlers) {
 
   time.addEventListener('input', () => { settings.hour = +time.value; h.onChange(); refresh(); });
   wind.addEventListener('input', () => { settings.wind = +wind.value; h.onChange(); refresh(); });
+  dream.addEventListener('input', () => { settings.dreamCount = +dream.value; h.onChange(); refresh(); });
   $('fireball').addEventListener('click', h.onFireball);
+  $('long-meteor').addEventListener('click', h.onLongMeteor);
   $('look-radiant').addEventListener('click', h.onLookRadiant);
 
   toggle.addEventListener('click', () => {
@@ -118,6 +137,9 @@ export function createUi(settings: Settings, h: UiHandlers) {
     time.value = String(settings.hour);
     $('time-val').textContent = formatHour(settings.hour).slice(-5);
     wind.value = String(settings.wind);
+    dreamRow.hidden = settings.rate !== 'dreamy';
+    dream.value = String(settings.dreamCount);
+    $('dream-val').textContent = `每分鐘 ${settings.dreamCount} 顆`;
     $('wind-val').textContent = settings.wind < 0.08 ? '無風如鏡' : settings.wind < 0.5 ? '微風' : '有風';
     saveSettings(settings);
   }

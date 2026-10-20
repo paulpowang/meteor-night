@@ -38,6 +38,10 @@
       <section>
         <h2>流星密度</h2>
         <div class="chips" id="rates"></div>
+        <div class="dream-row" id="dream-row" hidden>
+          <label for="dream">數量 <span class="val" id="dream-val"></span></label>
+          <input type="range" id="dream" step="10" />
+        </div>
       </section>
       <section>
         <h2>星座</h2>
@@ -53,7 +57,8 @@
         <input type="range" id="wind" min="0" max="1" step="0.01" />
       </section>
       <section class="row">
-        <button class="btn" id="fireball">✦ 來一顆火流星</button>
+        <button class="btn" id="fireball" title="帶綠光、末端爆亮、留下餘跡">✦ 火流星</button>
+        <button class="btn" id="long-meteor" title="慢慢劃過大半個天空">➶ 長流星</button>
         <button class="btn ghost" id="look-radiant">看輻射點</button>
       </section>
       <p class="hint">拖曳轉頭看四周 · 滾輪或雙指縮放 · 點一下星星看名字</p>

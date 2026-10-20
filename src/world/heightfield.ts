@@ -130,6 +130,11 @@ export function lakeMask(x: number, z: number): number {
   return Math.hypot(ex, ez) / wobble;
 }
 
+/** 沒有湖盆的原始地形（Paradise 場景用） */
+export function rawHeightAt(x: number, z: number): number {
+  return rainier(x, z) + surroundings(x, z);
+}
+
 export function heightAt(x: number, z: number): number {
   let h = rainier(x, z) + surroundings(x, z);
   // 湖盆：湖內壓到水面下，湖岸往外 0–120 m 平緩過渡

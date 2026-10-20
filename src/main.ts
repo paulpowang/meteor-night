@@ -15,6 +15,7 @@ import { createUi, DREAM_MAX, DREAM_MIN, formatHour, loadSettings, ratePerHour }
 import { heightAt } from './world/heightfield';
 import { horizonAlt, setHorizonHeight } from './world/horizon';
 import { createJoshuaWorld, joshuaColor, joshuaHeightAt } from './world/joshua';
+import { PARADISE_TREES, paradiseColor, paradiseHeightAt } from './world/paradise';
 import { createLake } from './world/lake';
 import { createTerrain, type Quality } from './world/terrain';
 import { createTrees } from './world/trees';
@@ -61,6 +62,7 @@ function world(k: SceneKey) {
   const t0 = performance.now();
   g = new THREE.Group();
   if (k === 'rainier') g.add(createTerrain(quality), createTrees(quality));
+  else if (k === 'paradise') g.add(createTerrain(quality, paradiseHeightAt, paradiseColor), createTrees(quality, PARADISE_TREES));
   else g.add(createTerrain(quality, joshuaHeightAt, joshuaColor), createJoshuaWorld(quality));
   tm(`地景 ${k}`, t0);
   worlds.set(k, g);
@@ -78,7 +80,7 @@ const settings = loadSettings();
 let preset: SkyPreset = PRESETS[settings.preset];
 
 const sq0 = params.get('scene');
-if (sq0 === 'rainier' || sq0 === 'joshua') settings.scene = sq0;
+if (sq0 === 'rainier' || sq0 === 'paradise' || sq0 === 'joshua') settings.scene = sq0;
 const look = createLookControls(camera, canvas, { ...SCENES[settings.scene].view, fov: isMobile ? 80 : 68 }, () => ui.activity(), onTap);
 
 const ui = createUi(settings, {
@@ -132,7 +134,7 @@ function applyPreset() {
 function applyScene() {
   const def = SCENES[settings.scene];
   setObserver(def.observer);
-  setHorizonHeight(def.key === 'joshua' ? joshuaHeightAt : heightAt);
+  setHorizonHeight(def.key === 'joshua' ? joshuaHeightAt : def.key === 'paradise' ? paradiseHeightAt : heightAt);
   world(def.key);
   worlds.forEach((g, k) => (g.visible = k === def.key));
   // 湖面隱藏時 Reflector 不會被畫，也就不會多畫一次反射貼圖

@@ -47,7 +47,7 @@ export interface Settings {
 const STORE_KEY = 'starshowing_settings_v1';
 
 export function loadSettings(): Settings {
-  const def: Settings = { scene: 'rainier', preset: 'milkyway', rate: 'demo', hour: PRESETS.milkyway.hour, speed: 0, wind: 0.2, constellations: 'off', dreamCount: 120 };
+  const def: Settings = { scene: 'paradise', preset: 'milkyway', rate: 'demo', hour: PRESETS.milkyway.hour, speed: 0, wind: 0.2, constellations: 'off', dreamCount: 120 };
   try {
     const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
     if (!raw || typeof raw !== 'object') return def;
@@ -149,6 +149,8 @@ export function createUi(settings: Settings, h: UiHandlers) {
     dreamRow.hidden = settings.rate !== 'dreamy';
     dream.value = String(settings.dreamCount);
     $('dream-val').textContent = `每分鐘 ${settings.dreamCount} 顆`;
+    // 湖面倒影會把流星也再畫一次，流星多時顯卡負擔明顯
+    $('dream-warn').hidden = !(settings.scene === 'rainier');
     $('wind-val').textContent = settings.wind < 0.08 ? '無風如鏡' : settings.wind < 0.5 ? '微風' : '有風';
     saveSettings(settings);
   }

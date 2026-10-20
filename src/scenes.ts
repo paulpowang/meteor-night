@@ -1,7 +1,7 @@
 /* 觀測場景（地點）。每個場景有自己的經緯度（星空會跟著變）、地景、預設視角與光害方向。
  * key 會存進 localStorage，發佈後不可改名。 */
 
-export type SceneKey = 'rainier' | 'joshua';
+export type SceneKey = 'rainier' | 'paradise' | 'joshua';
 
 export interface SceneDef {
   key: SceneKey;
@@ -23,11 +23,21 @@ export const SCENES: Record<SceneKey, SceneDef> = {
     key: 'rainier',
     name: 'Rainier 湖畔',
     place: 'Reflection Lakes · Mount Rainier',
-    desc: '雪山、冷杉與湖面倒影',
+    desc: '雪山、冷杉與湖面倒影。比較吃顯卡（每幀要多畫一次倒影），夢幻模式流星很多時更明顯',
     observer: { lat: 46.768, lon: -121.732, elevation: 1480 },
     view: { yaw: -4, pitch: 8 },
     lightPollution: { az: 315, strength: 1 },
     lake: true,
+  },
+  paradise: {
+    key: 'paradise',
+    name: 'Rainier 草甸',
+    place: 'Paradise · Mount Rainier',
+    desc: '同一座 Rainier，站在山腳的 Paradise 高山草甸看；沒有湖面倒影，比較省顯卡',
+    observer: { lat: 46.786, lon: -121.735, elevation: 1645 },
+    view: { yaw: -9, pitch: 17 },
+    lightPollution: { az: 315, strength: 1 },
+    lake: false,
   },
   joshua: {
     key: 'joshua',
@@ -42,4 +52,5 @@ export const SCENES: Record<SceneKey, SceneDef> = {
   },
 };
 
-export const SCENE_ORDER: SceneKey[] = ['rainier', 'joshua'];
+// 沒有湖的 Paradise 排第一、也是預設：第一次打開不會一開始就吃重顯卡
+export const SCENE_ORDER: SceneKey[] = ['paradise', 'rainier', 'joshua'];

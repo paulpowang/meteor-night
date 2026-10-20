@@ -1,6 +1,6 @@
 # 星空觀景台 starshowing
 
-站在 Mount Rainier 的 Reflection Lakes 湖畔，看英仙座流星雨劃過真實星空，湖面同時映出雪山、星星和流星。也可以換到 Joshua Tree 國家公園的沙漠，在約書亞樹和花崗岩巨石間看流星。
+站在 Mount Rainier 山腳的 Paradise 高山草甸，看英仙座流星雨劃過真實星空。也可以換到 Reflection Lakes 湖畔（湖面映出雪山、星星和流星），或 Joshua Tree 國家公園的沙漠。
 
 ## 快速開始
 
@@ -14,7 +14,7 @@ npm run build      # 輸出到 dist/，可放上任何靜態主機
 
 `.github/workflows/deploy.yml` 會在推送到 `main` 時自動執行 `npm ci`、`npm run build`，再把 `dist/` 部署到 GitHub Pages。第一次使用前，要到 repo 的 **Settings → Pages**，把 **Source** 設成 **GitHub Actions**。`base: './'` 是相對路徑，放在 `https://<帳號>.github.io/<repo>/` 子路徑下也能正常載入。免費帳號的 repo 要設成公開，網站才能用 Pages 發佈。
 
-網址參數（截圖驗證用）：`?scene=rainier|joshua`、`?preset=milkyway|moonlight|aurora|bluehour`、`?yaw=-4&pitch=8&fov=68`、`?con=off|lines|names`（星座）、`?star=91262`（直接選一顆星，數字是 HIP 編號）、`?rate=real|demo|storm|dreamy`、`?dream=300`（夢幻模式每分鐘顆數）、`?q=low`（強制低品質）、`?debug`（在 console 印出載入時間）。
+網址參數（截圖驗證用）：`?scene=paradise|rainier|joshua`、`?preset=milkyway|moonlight|aurora|bluehour`、`?yaw=-4&pitch=8&fov=68`、`?con=off|lines|names`（星座）、`?star=91262`（直接選一顆星，數字是 HIP 編號）、`?rate=real|demo|storm|dreamy`、`?dream=300`（夢幻模式每分鐘顆數）、`?q=low`（強制低品質）、`?debug`（在 console 印出載入時間）。
 
 ## 功能
 
@@ -23,8 +23,9 @@ npm run build      # 輸出到 dist/，可放上任何靜態主機
   - **長流星**：約 4% 的流星（輻射點低時約 8%）是從遠離輻射點處貼著大氣層掠過的長流星，慢慢劃過 50°–110° 的天空。
   - 密度分成「真實」（約每分鐘 1 顆）、「示範」、「流星暴」、「夢幻」四種，也能手動放「火流星」「長流星」。
   - **夢幻**：一直有很多彩色流星，數量用滑桿調（每分鐘 10–600 顆，預設 120）；比較慢、比較亮，長流星和餘跡更多，三成流星來自隨機方向，不受輻射點高度影響。
-- **2 個場景**（設定面板最上方切換，第一次切換約 0.4 秒，之後立即）：
-  - **Rainier 湖畔**：Reflection Lakes（46.77°N），雪山、冷杉、湖面倒影。
+- **3 個場景**（設定面板最上方切換，第一次切換約 0.4 秒，之後立即）：
+  - **Rainier 草甸**（預設）：Paradise（46.79°N，海拔 1,645 m），山頂在北偏西 14°、7.7 km 外，仰角約 20°；前景是高山草甸和零星的矮冷杉。沒有湖面倒影，第一次打開不會吃重顯卡。
+  - **Rainier 湖畔**：Reflection Lakes（46.77°N），雪山、冷杉、湖面倒影。比較吃顯卡（每幀多畫一次倒影），夢幻模式流星很多時更明顯，介面上有提示。
   - **Joshua Tree 沙漠**：Jumbo Rocks 附近的 Queen Valley（33.99°N），約書亞樹、花崗岩巨石堆、低矮灌木，遠方一圈低山，地平線開闊；西南方有 Coachella Valley 的光害。沒有湖面倒影，每幀少畫一次整個場景，比較省顯卡（三角形數約少 3 成）。
   - 星空依各場景的經緯度計算：在 Joshua Tree，北極星仰角約 34°，銀河中心比較高。
 - **真實星空**：5,044 顆真實恆星（星等 6 以內），依 2026-08-13 凌晨的時間和觀測點位置計算；星色依 B-V 色指數，接近地平線時會變暗、變紅。另外補了 26,000 顆程式產生的暗星，讓銀河更有層次。
@@ -55,6 +56,7 @@ src/world/terrain.ts     極座標地形網格、雪線上色與雪面細節 sha
 src/world/trees.ts       冷杉 InstancedMesh
 src/world/lake.ts        Reflector 湖面倒影、波紋
 src/world/horizon.ts     地景剪影仰角表（判斷星星是否躲在山後，各場景分開快取）
+src/world/paradise.ts    Paradise 場景：沿用 Rainier 高度場、平移觀測點，草甸上色與冷杉設定
 src/world/joshua.ts      Joshua Tree 場景：沙漠高度場、約書亞樹、花崗岩巨石、灌木
 src/post.ts              光暈、ACES、暗角、顆粒
 src/controls.ts          原地轉頭視角、點擊判定（移動 < 6 px 才算點擊）

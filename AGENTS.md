@@ -5,7 +5,7 @@
 
 ## 一句話理解本專案
 
-Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Reflection Lakes（或 Joshua Tree 沙漠）看英仙座流星雨，有真實星圖、銀河、湖面倒影和 4 種星空樣式；第二版加了星座連線與名稱、點星星認星。純前端，設定存在 localStorage。
+Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Paradise 草甸（或 Reflection Lakes 湖畔、Joshua Tree 沙漠）看英仙座流星雨，有真實星圖、銀河、湖面倒影和 4 種星空樣式；第二版加了星座連線與名稱、點星星認星。純前端，設定存在 localStorage。
 
 ## 鐵則（不可違反）
 
@@ -15,8 +15,9 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 4. UI、文件、註解一律繁體中文。
 5. 專案放在 `C:\dev\starshowing`，**不要搬進 OneDrive**（`node_modules` 同步問題）。
 6. 不加圖片素材；新增資料檔要寫明來源與授權。
-7. localStorage key `starshowing_settings_v1`、樣式 key（`milkyway`、`moonlight`、`aurora`、`bluehour`）、場景 key（`rainier`、`joshua`）、密度 key（`real`、`demo`、`storm`、`dreamy`）、星座模式 key（`off`、`lines`、`names`）發佈後不可改名。
-8. 星座連線預設關閉，而且要又細又淡，不能搶流星的風采。
+7. localStorage key `starshowing_settings_v1`、樣式 key（`milkyway`、`moonlight`、`aurora`、`bluehour`）、場景 key（`paradise`、`rainier`、`joshua`）、密度 key（`real`、`demo`、`storm`、`dreamy`）、星座模式 key（`off`、`lines`、`names`）發佈後不可改名。
+8. 預設場景是沒有湖的 `paradise`（使用者 2026-10-19 指定，避免一打開就吃重顯卡）；湖畔場景要保留「比較吃顯卡」的提示。
+9. 星座連線預設關閉，而且要又細又淡，不能搶流星的風采。
 
 ## 架構速覽
 
@@ -61,6 +62,9 @@ Vite + TypeScript + three.js 的寫實星空網頁：在 Mount Rainier 的 Refle
 - 流星不能在亮度還很高時直接停畫：本體結束後要有 burnout 階段把亮度收到 0，否則看起來像「被截掉」（尤其是火流星，光暈會放大這個斷點）。改流星亮度曲線後，用 console 建一個獨立的 `createMeteors()`，以固定 dt 逐幀記錄 `color` 的 alpha，確認最後幾幀是平滑降到 0。
 - 長的四邊形寬度方向要在兩端各自算（切線 × 該端位置），頭部長度用像素決定，不能用固定比例，否則長流星的頭會被拉成一大坨。
 - 在 console 用 `await import('/src/astro.ts')` 拿到的模組，可能跟主程式用的不是同一個實例（Vite HMR 會加時間戳記），讀到的 `OBSERVER` 會是舊值。驗算天文時，直接用 `__app.eqToWorld` 把星的方向算出來。
+- Paradise 場景是把 Reflection Lakes 的高度場平移（`OX`, `OZ`）再扣掉觀測點高度 `H0`；上色、林線也要用平移回去的座標和高度，否則林線、雪線會錯位。改 Rainier 山形時兩個場景會一起變，兩邊都要截圖。
+- 截圖時如果使用者也在 pane 裡拖曳，視角會跑掉：在截圖前一刻用 `__app.look.set()` 設定，不要只靠網址參數。
+- 用 Python 或 shell 改檔偶爾不會觸發 Vite 的檔案監看，畫面還是舊的：`touch` 一下檔案，或用 `fetch('/src/xxx.ts')` 確認伺服器給的是新版。
 - 本機另一個 session 可能佔著 5188；可以用 `npm run dev -- --port 5190` 另開一個。
 
 ## 已知問題
